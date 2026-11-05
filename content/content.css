@@ -1,0 +1,4 @@
+/* YouTube Ban Words - Hide matching elements completely */
+[data-yt-banned="true"] {
+  display: none !important;
+}

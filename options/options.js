@@ -1,0 +1,307 @@
+/**
+ * YouTube Ban Words - Options Script
+ */
+
+(function () {
+  'use strict';
+
+  const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+  const storage = browserAPI.storage.sync || browserAPI.storage.local;
+
+  // State
+  let settings = {
+    enabled: true,
+    words: [],
+    regexEnabled: false,
+    caseSensitive: false
+  };
+
+  // DOM Elements
+  const optEnabled = document.getElementById('optEnabled');
+  const optRegex = document.getElementById('optRegex');
+  const optCase = document.getElementById('optCase');
+  const addWordsForm = document.getElementById('addWordsForm');
+  const wordsInput = document.getElementById('wordsInput');
+  const filterInput = document.getElementById('filterInput');
+  const wordsContainer = document.getElementById('wordsContainer');
+  const emptyState = document.getElementById('emptyState');
+  const totalWordsCount = document.getElementById('totalWordsCount');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+  const exportTsvBtn = document.getElementById('exportTsvBtn');
+  const fileInput = document.getElementById('fileInput');
+  const importNotice = document.getElementById('importNotice');
+  const saveFeedback = document.getElementById('saveFeedback');
+
+  function showSavedToast(msg = 'Changes saved automatically') {
+    saveFeedback.textContent = msg;
+    saveFeedback.style.opacity = '1';
+    setTimeout(() => {
+      saveFeedback.style.opacity = '0.7';
+    }, 2000);
+  }
+
+  function showImportNotice(msg, isError = false) {
+    importNotice.textContent = msg;
+    importNotice.style.color = isError ? 'var(--danger)' : 'var(--success)';
+    setTimeout(() => {
+      importNotice.textContent = '';
+    }, 3500);
+  }
+
+  async function saveSettings() {
+    await storage.set(settings);
+    showSavedToast();
+  }
+
+  // Render the list of word tags
+  function renderWords() {
+    const filterQuery = (filterInput.value || '').trim().toLowerCase();
+    wordsContainer.innerHTML = '';
+
+    const filteredWords = settings.words.filter(word => {
+      if (!filterQuery) return true;
+      return word.toLowerCase().includes(filterQuery);
+    });
+
+    totalWordsCount.textContent = settings.words.length;
+
+    if (settings.words.length === 0) {
+      emptyState.style.display = 'block';
+      emptyState.innerHTML = '<p>No banned words yet. Add your first keyword above!</p>';
+      return;
+    }
+
+    if (filteredWords.length === 0) {
+      emptyState.style.display = 'block';
+      emptyState.innerHTML = '<p>No words matching your search query.</p>';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    filteredWords.forEach(word => {
+      const tag = document.createElement('div');
+      tag.className = 'word-tag';
+
+      const textSpan = document.createElement('span');
+      textSpan.textContent = word;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-word';
+      delBtn.setAttribute('title', `Remove "${word}"`);
+      delBtn.setAttribute('aria-label', `Remove "${word}"`);
+      delBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      `;
+
+      delBtn.addEventListener('click', () => {
+        removeWord(word);
+      });
+
+      tag.appendChild(textSpan);
+      tag.appendChild(delBtn);
+      wordsContainer.appendChild(tag);
+    });
+  }
+
+  function removeWord(wordToRemove) {
+    settings.words = settings.words.filter(w => w !== wordToRemove);
+    renderWords();
+    saveSettings();
+  }
+
+  function addWords(wordsArray) {
+    const existingLower = new Set(settings.words.map(w => w.toLowerCase()));
+    let addedCount = 0;
+
+    for (const item of wordsArray) {
+      const clean = item.trim();
+      if (clean && !existingLower.has(clean.toLowerCase())) {
+        settings.words.push(clean);
+        existingLower.add(clean.toLowerCase());
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      renderWords();
+      saveSettings();
+    }
+
+    return addedCount;
+  }
+
+  // Initialize
+  async function init() {
+    try {
+      const data = await storage.get({
+        enabled: true,
+        words: [],
+        regexEnabled: false,
+        caseSensitive: false
+      });
+
+      settings.enabled = data.enabled !== false;
+      settings.words = Array.isArray(data.words) ? data.words : [];
+      settings.regexEnabled = Boolean(data.regexEnabled);
+      settings.caseSensitive = Boolean(data.caseSensitive);
+
+      optEnabled.checked = settings.enabled;
+      optRegex.checked = settings.regexEnabled;
+      optCase.checked = settings.caseSensitive;
+
+      renderWords();
+    } catch (err) {
+      console.error('[YouTube Ban Words] Failed to initialize options:', err);
+    }
+  }
+
+  // Toggles
+  optEnabled.addEventListener('change', () => {
+    settings.enabled = optEnabled.checked;
+    saveSettings();
+  });
+
+  optRegex.addEventListener('change', () => {
+    settings.regexEnabled = optRegex.checked;
+    saveSettings();
+  });
+
+  optCase.addEventListener('change', () => {
+    settings.caseSensitive = optCase.checked;
+    saveSettings();
+  });
+
+  // Add words form (supports comma or newlines)
+  addWordsForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const raw = wordsInput.value;
+    if (!raw.trim()) return;
+
+    // Split on comma or newline
+    const items = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    const added = addWords(items);
+
+    if (added > 0) {
+      wordsInput.value = '';
+      showSavedToast(`Added ${added} new word${added > 1 ? 's' : ''}`);
+    } else {
+      showSavedToast('All entered words are already in the list');
+    }
+  });
+
+  // Filter input
+  filterInput.addEventListener('input', renderWords);
+
+  // Clear all words
+  clearAllBtn.addEventListener('click', () => {
+    if (settings.words.length === 0) return;
+    if (confirm(`Are you sure you want to remove all ${settings.words.length} banned words?`)) {
+      settings.words = [];
+      renderWords();
+      saveSettings();
+      showSavedToast('All words cleared');
+    }
+  });
+
+  // Export functions
+  function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  exportCsvBtn.addEventListener('click', () => {
+    if (settings.words.length === 0) {
+      alert('Your word list is empty. Nothing to export.');
+      return;
+    }
+    // Escape CSV values with quotes if they contain commas or quotes
+    const rows = ['Keyword'];
+    for (const w of settings.words) {
+      const escaped = `"${w.replace(/"/g, '""')}"`;
+      rows.push(escaped);
+    }
+    downloadFile(rows.join('\r\n'), 'youtube_banned_words.csv', 'text/csv;charset=utf-8;');
+  });
+
+  exportTsvBtn.addEventListener('click', () => {
+    if (settings.words.length === 0) {
+      alert('Your word list is empty. Nothing to export.');
+      return;
+    }
+    const rows = ['Keyword'];
+    for (const w of settings.words) {
+      rows.push(w.replace(/\t/g, ' '));
+    }
+    downloadFile(rows.join('\r\n'), 'youtube_banned_words.tsv', 'text/tab-separated-values;charset=utf-8;');
+  });
+
+  // Import file
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/);
+      const parsedWords = [];
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+
+        // Strip surrounding quotes if present
+        if (line.startsWith('"') && line.endsWith('"')) {
+          line = line.slice(1, -1).replace(/""/g, '"');
+        }
+
+        // If line is header 'Keyword', skip it
+        if (line.toLowerCase() === 'keyword') {
+          continue;
+        }
+
+        // Split on comma or tab if multiple items on one line
+        const parts = line.split(/[,\t]+/).map(p => {
+          let s = p.trim();
+          if (s.startsWith('"') && s.endsWith('"')) {
+            s = s.slice(1, -1).replace(/""/g, '"');
+          }
+          return s.trim();
+        }).filter(Boolean);
+
+        parsedWords.push(...parts);
+      }
+
+      const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'merge';
+
+      if (mode === 'replace') {
+        const unique = Array.from(new Set(parsedWords));
+        settings.words = unique;
+        renderWords();
+        saveSettings();
+        showImportNotice(`Replaced list with ${unique.length} words!`);
+      } else {
+        const added = addWords(parsedWords);
+        showImportNotice(`Imported ${added} new words (${parsedWords.length - added} duplicates skipped)`);
+      }
+    } catch (err) {
+      console.error('[YouTube Ban Words] Import error:', err);
+      showImportNotice('Failed to read file. Please ensure it is a valid CSV/TSV/TXT file.', true);
+    } finally {
+      fileInput.value = '';
+    }
+  });
+
+  init();
+})();

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Ban Words - Settings & Words List</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <div class="header-brand">
+        <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <div>
+          <h1>YouTube Ban Words</h1>
+          <p class="subtitle">Custom keyword & phrase filtering for Firefox & Zen Browser</p>
+        </div>
+      </div>
+      <div id="saveFeedback" class="save-badge">Changes saved automatically</div>
+    </header>
+
+    <main class="grid-layout">
+      <!-- Left Column: Settings & Import/Export -->
+      <div class="left-col">
+        <!-- Matching Rules & Options -->
+        <section class="card">
+          <h2>Matching Settings</h2>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Enable Filtering</span>
+              <span class="setting-desc">Toggle the filter without clearing your word list</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="optEnabled" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Advanced Regex Mode</span>
+              <span class="setting-desc">Treat banned words as Regular Expressions (e.g. <code>\b(keyword1|keyword2)\b</code>)</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="optRegex">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Case Sensitive</span>
+              <span class="setting-desc">Match exact uppercase/lowercase characters (default: off)</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="optCase">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Import / Export -->
+        <section class="card">
+          <h2>Backup & Transfer</h2>
+          <p class="setting-desc" style="margin-bottom: 12px;">Export or import your banned words in plain text formats.</p>
+
+          <div class="btn-group">
+            <button id="exportCsvBtn" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+            <button id="exportTsvBtn" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export TSV
+            </button>
+          </div>
+
+          <div class="import-area">
+            <label class="btn btn-primary file-btn" for="fileInput">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import CSV / TSV / TXT
+            </label>
+            <input type="file" id="fileInput" accept=".csv,.tsv,.txt" style="display: none;">
+            <div class="import-mode">
+              <label><input type="radio" name="importMode" value="merge" checked> Merge</label>
+              <label><input type="radio" name="importMode" value="replace"> Replace list</label>
+            </div>
+          </div>
+          <div id="importNotice" class="notice"></div>
+        </section>
+      </div>
+
+      <!-- Right Column: Words List & Addition -->
+      <div class="right-col">
+        <section class="card main-card">
+          <div class="card-header-flex">
+            <h2>Banned Words (<span id="totalWordsCount">0</span>)</h2>
+            <button id="clearAllBtn" class="btn btn-danger-outline" title="Remove all words">Clear All</button>
+          </div>
+
+          <!-- Add Words Form -->
+          <form id="addWordsForm" class="add-form">
+            <textarea
+              id="wordsInput"
+              rows="3"
+              placeholder="Enter keywords separated by commas or line breaks (e.g. keyword, phrase, creator name)..."
+              spellcheck="false"
+            ></textarea>
+            <div class="add-form-actions">
+              <span class="hint">Supports comma (,) or new line separation</span>
+              <button type="submit" class="btn btn-primary" id="addBtn">Add Words</button>
+            </div>
+          </form>
+
+          <!-- Search filter for word list -->
+          <div class="filter-bar">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="filterInput" placeholder="Search in your banned words..." autocomplete="off">
+            </div>
+          </div>
+
+          <!-- Words Container -->
+          <div id="wordsContainer" class="words-container">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div id="emptyState" class="empty-state" style="display: none;">
+            <p>No banned words yet. Add your first keyword above!</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

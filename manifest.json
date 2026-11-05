@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Ban Words",
+  "version": "1.0.0",
+  "description": "Hide YouTube videos, shorts, and channels by banned keywords or phrases.",
+  "permissions": ["storage"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-ban-words@extension",
+      "strict_min_version": "109.0"
+    }
+  },
+  "action": {
+    "default_title": "YouTube Ban Words",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  }
+}
