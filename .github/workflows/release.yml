@@ -1,0 +1,71 @@
+name: Package & Draft Release
+
+on:
+  # Allows triggering manually from the GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0 or v1.0.0). Leave empty to use package.json version.'
+        required: false
+        default: ''
+  # Automatically triggers when pushing a version tag (e.g. git push origin v1.0.0)
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  draft-release:
+    name: Build & Draft Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full git history so GitHub can auto-generate release notes
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Determine Release Tag
+        id: release_info
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            INPUT_VER="${{ github.event.inputs.version }}"
+            # Add 'v' prefix if omitted
+            if [[ "$INPUT_VER" != v* ]]; then
+              TAG_NAME="v${INPUT_VER}"
+            else
+              TAG_NAME="$INPUT_VER"
+            fi
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+          else
+            PKG_VER=$(node -p "require('./package.json').version")
+            TAG_NAME="v${PKG_VER}"
+          fi
+
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Release tag target: ${TAG_NAME}"
+
+      - name: Package extension (.zip & .xpi)
+        run: npm run pack
+
+      - name: Create or Update Draft GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.release_info.outputs.tag_name }}
+        run: |
+          echo "Creating draft release for $TAG_NAME..."
+          gh release create "$TAG_NAME" \
+            dist/youtube-ban-words.zip \
+            dist/youtube-ban-words.xpi \
+            --draft \
+            --title "Release $TAG_NAME" \
+            --target "${{ github.sha }}" \
+            --generate-notes

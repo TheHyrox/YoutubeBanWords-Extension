@@ -67,6 +67,23 @@ Generated files in `dist/`:
 
 ---
 
+## Automated Releases (GitHub Actions)
+
+A GitHub Actions workflow is included at `.github/workflows/release.yml` to automate releases:
+
+1. Go to the **Actions** tab on your GitHub repository.
+2. Select **"Package & Draft Release"** in the sidebar.
+3. Click **"Run workflow"** (you can optionally specify a version tag, or let it read from `package.json`).
+4. The workflow will:
+   - Run `npm run pack` to build the `.zip` and `.xpi`.
+   - Auto-generate release notes based on recent commits.
+   - Create a **Draft Release** with both files attached.
+5. You can then review the draft in **Releases**, edit or complete the release notes, and click **"Publish release"**!
+
+*(Alternatively, pushing a git tag like `git tag v1.0.0 && git push origin v1.0.0` triggers the same draft creation automatically).*
+
+---
+
 ## Project Structure
 
 ```text
