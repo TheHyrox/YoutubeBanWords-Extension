@@ -16,7 +16,7 @@
         </svg>
         <div>
           <h1>YouTube Ban Words</h1>
-          <p class="subtitle">Custom keyword & phrase filtering for Firefox & Zen Browser</p>
+          <p class="subtitle">Custom keyword & phrase filtering for Firefox, Zen, Chrome & Chromium</p>
         </div>
       </div>
       <div id="saveFeedback" class="save-badge">Changes saved automatically</div>
@@ -88,14 +88,18 @@
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export TSV
             </button>
+            <button id="exportJsonBtn" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export JSON
+            </button>
           </div>
 
           <div class="import-area">
             <label class="btn btn-primary file-btn" for="fileInput">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Import CSV / TSV / TXT
+              Import CSV / TSV / JSON / TXT
             </label>
-            <input type="file" id="fileInput" accept=".csv,.tsv,.txt" style="display: none;">
+            <input type="file" id="fileInput" accept=".csv,.tsv,.json,.txt" style="display: none;">
             <div class="import-mode">
               <label><input type="radio" name="importMode" value="merge" checked> Merge</label>
               <label><input type="radio" name="importMode" value="replace"> Replace list</label>
@@ -127,12 +131,18 @@
             </div>
           </form>
 
-          <!-- Search filter for word list -->
+          <!-- Search filter & sort for word list -->
           <div class="filter-bar">
             <div class="search-wrap">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
               <input type="text" id="filterInput" placeholder="Search in your banned words..." autocomplete="off">
             </div>
+            <select id="sortSelect" class="sort-select" title="Sort word list">
+              <option value="oldest" selected>Order: Insertion (Oldest)</option>
+              <option value="newest">Order: Newest First</option>
+              <option value="az">Alphabetical (A-Z)</option>
+              <option value="za">Alphabetical (Z-A)</option>
+            </select>
           </div>
 
           <!-- Words Container -->

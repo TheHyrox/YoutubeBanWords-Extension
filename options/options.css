@@ -351,12 +351,16 @@ input:checked + .slider:before {
   color: var(--text-muted);
 }
 
-/* Search bar */
+/* Search & Sort bar */
 .filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .search-wrap {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -377,6 +381,22 @@ input:checked + .slider:before {
   color: var(--text-main);
   font-size: 13px;
   outline: none;
+}
+
+.sort-select {
+  background: var(--bg-inner);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.sort-select:focus {
+  border-color: var(--accent);
 }
 
 /* Words tags list */

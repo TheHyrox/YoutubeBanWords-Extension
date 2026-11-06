@@ -31,6 +31,8 @@
   const clearAllBtn = document.getElementById('clearAllBtn');
   const exportCsvBtn = document.getElementById('exportCsvBtn');
   const exportTsvBtn = document.getElementById('exportTsvBtn');
+  const exportJsonBtn = document.getElementById('exportJsonBtn');
+  const sortSelect = document.getElementById('sortSelect');
   const fileInput = document.getElementById('fileInput');
   const importNotice = document.getElementById('importNotice');
   const saveFeedback = document.getElementById('saveFeedback');
@@ -61,10 +63,20 @@
     const filterQuery = (filterInput.value || '').trim().toLowerCase();
     wordsContainer.innerHTML = '';
 
-    const filteredWords = settings.words.filter(word => {
+    let filteredWords = settings.words.filter(word => {
       if (!filterQuery) return true;
       return word.toLowerCase().includes(filterQuery);
     });
+
+    // Apply sorting
+    const sortMode = sortSelect ? sortSelect.value : 'oldest';
+    if (sortMode === 'newest') {
+      filteredWords = filteredWords.slice().reverse();
+    } else if (sortMode === 'az') {
+      filteredWords = filteredWords.slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    } else if (sortMode === 'za') {
+      filteredWords = filteredWords.slice().sort((a, b) => b.localeCompare(a, undefined, { sensitivity: 'base' }));
+    }
 
     totalWordsCount.textContent = settings.words.length;
 
@@ -204,8 +216,11 @@
     }
   });
 
-  // Filter input
+  // Filter input & sort select
   filterInput.addEventListener('input', renderWords);
+  if (sortSelect) {
+    sortSelect.addEventListener('change', renderWords);
+  }
 
   // Clear all words
   clearAllBtn.addEventListener('click', () => {
@@ -257,6 +272,25 @@
     downloadFile(rows.join('\r\n'), 'youtube_banned_words.tsv', 'text/tab-separated-values;charset=utf-8;');
   });
 
+  exportJsonBtn.addEventListener('click', () => {
+    if (settings.words.length === 0) {
+      alert('Your word list is empty. Nothing to export.');
+      return;
+    }
+    const backup = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      settings: {
+        enabled: settings.enabled,
+        regexEnabled: settings.regexEnabled,
+        wholeWord: settings.wholeWord,
+        caseSensitive: settings.caseSensitive
+      },
+      words: settings.words
+    };
+    downloadFile(JSON.stringify(backup, null, 2), 'youtube_banned_words.json', 'application/json;charset=utf-8;');
+  });
+
   // Import file
   fileInput.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -264,33 +298,61 @@
 
     try {
       const text = await file.text();
-      const lines = text.split(/\r?\n/);
-      const parsedWords = [];
+      let parsedWords = [];
+      let importedSettings = null;
 
-      for (let line of lines) {
-        line = line.trim();
-        if (!line) continue;
-
-        // Strip surrounding quotes if present
-        if (line.startsWith('"') && line.endsWith('"')) {
-          line = line.slice(1, -1).replace(/""/g, '"');
-        }
-
-        // If line is header 'Keyword', skip it
-        if (line.toLowerCase() === 'keyword') {
-          continue;
-        }
-
-        // Split on comma or tab if multiple items on one line
-        const parts = line.split(/[,\t]+/).map(p => {
-          let s = p.trim();
-          if (s.startsWith('"') && s.endsWith('"')) {
-            s = s.slice(1, -1).replace(/""/g, '"');
+      // Check for JSON format
+      if (file.name.toLowerCase().endsWith('.json') || file.type === 'application/json') {
+        try {
+          const json = JSON.parse(text);
+          if (Array.isArray(json)) {
+            parsedWords = json.filter(w => typeof w === 'string' && w.trim().length > 0);
+          } else if (json && typeof json === 'object') {
+            if (Array.isArray(json.words)) {
+              parsedWords = json.words.filter(w => typeof w === 'string' && w.trim().length > 0);
+            }
+            if (json.settings && typeof json.settings === 'object') {
+              importedSettings = json.settings;
+            }
           }
-          return s.trim();
-        }).filter(Boolean);
+        } catch (_) {
+          showImportNotice('Invalid JSON structure in imported file.', true);
+          return;
+        }
+      } else {
+        // Parse CSV / TSV / plain text line-by-line
+        const lines = text.split(/\r?\n/);
 
-        parsedWords.push(...parts);
+        for (let line of lines) {
+          line = line.trim();
+          if (!line) continue;
+
+          // Strip surrounding quotes if present
+          if (line.startsWith('"') && line.endsWith('"')) {
+            line = line.slice(1, -1).replace(/""/g, '"');
+          }
+
+          // If line is header 'Keyword', skip it
+          if (line.toLowerCase() === 'keyword') {
+            continue;
+          }
+
+          // Split on comma or tab if multiple items on one line
+          const parts = line.split(/[,\t]+/).map(p => {
+            let s = p.trim();
+            if (s.startsWith('"') && s.endsWith('"')) {
+              s = s.slice(1, -1).replace(/""/g, '"');
+            }
+            return s.trim();
+          }).filter(Boolean);
+
+          parsedWords.push(...parts);
+        }
+      }
+
+      if (parsedWords.length === 0 && !importedSettings) {
+        showImportNotice('No valid keywords found in imported file.', true);
+        return;
       }
 
       const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'merge';
@@ -298,6 +360,19 @@
       if (mode === 'replace') {
         const unique = Array.from(new Set(parsedWords));
         settings.words = unique;
+
+        if (importedSettings) {
+          if (typeof importedSettings.enabled === 'boolean') settings.enabled = importedSettings.enabled;
+          if (typeof importedSettings.regexEnabled === 'boolean') settings.regexEnabled = importedSettings.regexEnabled;
+          if (typeof importedSettings.wholeWord === 'boolean') settings.wholeWord = importedSettings.wholeWord;
+          if (typeof importedSettings.caseSensitive === 'boolean') settings.caseSensitive = importedSettings.caseSensitive;
+
+          optEnabled.checked = settings.enabled;
+          optRegex.checked = settings.regexEnabled;
+          optWholeWord.checked = settings.wholeWord;
+          optCase.checked = settings.caseSensitive;
+        }
+
         renderWords();
         saveSettings();
         showImportNotice(`Replaced list with ${unique.length} words!`);
@@ -307,7 +382,7 @@
       }
     } catch (err) {
       console.error('[YouTube Ban Words] Import error:', err);
-      showImportNotice('Failed to read file. Please ensure it is a valid CSV/TSV/TXT file.', true);
+      showImportNotice('Failed to read file. Please ensure it is a valid CSV/TSV/JSON/TXT file.', true);
     } finally {
       fileInput.value = '';
     }
