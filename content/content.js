@@ -16,6 +16,7 @@
   };
 
   let compiledRegexes = [];
+  let normalizedWords = [];
   let isScanning = false;
   let scanScheduled = false;
 
@@ -28,11 +29,23 @@
     'ytd-grid-video-renderer',
     'ytd-channel-renderer',
     'ytd-playlist-renderer',
+    'ytd-radio-renderer',
+    'ytd-backstage-post-renderer',
+    'ytd-post-renderer',
     'yt-lockup-view-model',
+    'ytm-shorts-lockup-view-model',
     'ytm-shorts-lockup-view-model-v2'
   ];
 
   const CARD_QUERY = CARD_SELECTORS.join(', ');
+
+  // Selectors for shelf/section containers (e.g. Shorts shelves)
+  const SHELF_SELECTORS = [
+    'ytd-rich-section-renderer',
+    'ytd-reel-shelf-renderer'
+  ];
+
+  const SHELF_QUERY = SHELF_SELECTORS.join(', ');
 
   // Selectors to extract title inside a card
   const TITLE_SELECTORS = [
@@ -44,6 +57,8 @@
     'h3 a'
   ];
 
+  const TITLE_QUERY = TITLE_SELECTORS.join(', ');
+
   // Selectors to extract channel name inside a card
   const CHANNEL_SELECTORS = [
     'ytd-channel-name',
@@ -53,6 +68,8 @@
     'a[href*="/@"]',
     '#byline'
   ];
+
+  const CHANNEL_QUERY = CHANNEL_SELECTORS.join(', ');
 
   /**
    * Load settings from browser storage
@@ -86,6 +103,7 @@
    */
   function compileRules() {
     compiledRegexes = [];
+    normalizedWords = [];
 
     if (!settings.enabled || settings.words.length === 0) {
       return;
@@ -100,6 +118,10 @@
           console.warn('[YouTube Ban Words] Invalid regex:', pattern, e);
         }
       }
+    } else {
+      normalizedWords = settings.caseSensitive
+        ? settings.words.filter(w => Boolean(w && w.trim()))
+        : settings.words.map(w => w.trim().toLowerCase()).filter(Boolean);
     }
   }
 
@@ -117,9 +139,8 @@
 
     const testText = settings.caseSensitive ? text : text.toLowerCase();
 
-    for (const word of settings.words) {
-      const target = settings.caseSensitive ? word : word.toLowerCase();
-      if (target && testText.includes(target)) {
+    for (let i = 0; i < normalizedWords.length; i++) {
+      if (testText.includes(normalizedWords[i])) {
         return true;
       }
     }
@@ -134,13 +155,10 @@
     let title = '';
     let channel = '';
 
-    // Find title
-    for (const sel of TITLE_SELECTORS) {
-      const el = card.querySelector(sel);
-      if (el) {
-        title = el.textContent || el.getAttribute('title') || el.getAttribute('aria-label') || '';
-        if (title.trim()) break;
-      }
+    // Find title using single combined query
+    const titleEl = card.querySelector(TITLE_QUERY);
+    if (titleEl) {
+      title = titleEl.textContent || titleEl.getAttribute('title') || titleEl.getAttribute('aria-label') || '';
     }
 
     // Fallback: look for aria-label on links if title is empty
@@ -151,13 +169,10 @@
       }
     }
 
-    // Find channel
-    for (const sel of CHANNEL_SELECTORS) {
-      const el = card.querySelector(sel);
-      if (el) {
-        channel = el.textContent || '';
-        if (channel.trim()) break;
-      }
+    // Find channel using single combined query
+    const channelEl = card.querySelector(CHANNEL_QUERY);
+    if (channelEl) {
+      channel = channelEl.textContent || '';
     }
 
     return {
@@ -200,6 +215,27 @@
           bannedCount++;
         } else if (card.hasAttribute('data-yt-banned')) {
           card.removeAttribute('data-yt-banned');
+        }
+      });
+
+      // Clean up empty shelf / carousel containers
+      const shelves = document.querySelectorAll(SHELF_QUERY);
+      shelves.forEach(shelf => {
+        if (!settings.enabled || settings.words.length === 0) {
+          if (shelf.hasAttribute('data-yt-banned')) {
+            shelf.removeAttribute('data-yt-banned');
+          }
+          return;
+        }
+
+        const items = shelf.querySelectorAll(CARD_QUERY);
+        if (items.length > 0) {
+          const allBanned = Array.from(items).every(item => item.getAttribute('data-yt-banned') === 'true');
+          if (allBanned) {
+            shelf.setAttribute('data-yt-banned', 'true');
+          } else if (shelf.hasAttribute('data-yt-banned')) {
+            shelf.removeAttribute('data-yt-banned');
+          }
         }
       });
 
