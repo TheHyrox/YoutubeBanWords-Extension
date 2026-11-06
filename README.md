@@ -17,13 +17,15 @@ Supports **Firefox**, **Zen Browser**, **Chrome**, **Brave**, **Edge**, and othe
   - Channel names & video titles
 - **Matching Options**:
   - Case-insensitive substring match by default.
-  - Optional **Advanced Regex Mode**.
+  - Optional **Whole Word Match** (prevents false positives e.g. "cat" matching "catch").
+  - Optional **Advanced Regex Mode** with interactive pattern testing and real-time syntax validation.
   - Optional **Case-Sensitive** mode.
 - **Popup & Options Dashboard**:
   - Quick ON/OFF toggle switch in toolbar.
   - Live count of hidden videos on active YouTube tab.
   - Quick-add keyword directly from popup.
-  - Full options page to manage words, search keywords, and **Import/Export (CSV/TSV)**.
+  - Word list sorting (Insertion, Newest, A-Z, Z-A).
+  - Full options page to manage words, search keywords, and **Import/Export (JSON/CSV/TSV)**.
 - **Zero Dependencies**: Pure vanilla JavaScript, fast and battery-friendly.
 
 ---
