@@ -74,6 +74,9 @@ Write clear, atomic commit messages in the imperative mood (e.g., "add", "fix", 
 # Verify JavaScript syntax across all scripts
 node -c content/content.js popup/popup.js options/options.js scripts/pack.js
 
+# Run automated end-to-end browser tests
+npm test
+
 # Build distributable packages (.zip for Chrome, .xpi for Firefox/Zen)
 npm run pack
 

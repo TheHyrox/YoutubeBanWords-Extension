@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Hide YouTube videos, shorts, and channels by banned keywords or phrases.",
   "scripts": {
-    "pack": "node scripts/pack.js"
+    "pack": "node scripts/pack.js",
+    "test": "node tests/e2e.test.js"
   },
   "keywords": [
     "youtube",
@@ -15,5 +16,8 @@
     "chromium"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "playwright-core": "^1.65.0"
+  }
 }

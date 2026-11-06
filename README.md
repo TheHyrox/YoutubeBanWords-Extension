@@ -51,6 +51,24 @@ Supports **Firefox**, **Zen Browser**, **Chrome**, **Brave**, **Edge**, and othe
 
 ---
 
+## Automated Browser Testing (`npm test`)
+
+Run real browser end-to-end tests across the extension popup, options page, and live YouTube DOM filtering:
+
+```bash
+npm test
+```
+
+Tests include:
+- Verifying extension loading in an unpacked Chromium session.
+- Managing keywords in the Options dashboard.
+- Interacting with the toolbar Popup (badge counts and quick-add).
+- Filtering YouTube video titles and channel names.
+- Dynamic DOM mutation observation (infinite scrolling).
+- Real-time pause and restore toggling.
+
+---
+
 ## Packaging (`npm run pack`)
 
 To package the extension into ready-to-distribute `.zip` and `.xpi` archives, run:
