@@ -1,95 +1,86 @@
-# YouTube Ban Words - Firefox & Zen Browser Extension
+# YouTube Ban Words
 
-A lightweight, zero-dependency Manifest V3 WebExtension built specifically for **Firefox** and **Zen Browser** to filter and completely hide YouTube videos, search results, Shorts shelves, and channels matching a customizable list of banned keywords.
+A fast, lightweight browser extension that hides YouTube videos, search results, Shorts, and channels matching your custom list of banned keywords.
+
+Supports **Firefox**, **Zen Browser**, **Chrome**, **Brave**, **Edge**, and other Chromium-based browsers.
 
 ---
 
 ## Features
 
-- **Total Element Removal**: Completely removes matching video cards, Shorts, recommendations, and search results so no awkward blank gaps or placeholders remain.
-- **Comprehensive Coverage**:
-  - Home feed recommendations (`ytd-rich-item-renderer`, `yt-lockup-view-model`)
-  - Search results (`ytd-video-renderer`, `ytd-channel-renderer`, `ytd-playlist-renderer`)
-  - Shorts shelves & carousel items (`ytd-reel-item-renderer`, `ytm-shorts-lockup-view-model-v2`)
-  - Suggested sidebar videos on watch pages (`ytd-compact-video-renderer`)
-  - Channel names & Video titles
-- **Instant Match Engine**:
-  - Case-insensitive substring matching by default.
-  - Optional **Advanced Regex Mode** for power users (e.g., `\b(keyword1|keyword2)\b`).
-  - Optional **Case-Sensitive** mode toggle.
-- **Fast Toolbar Popup**:
-  - One-click toggle switch to pause or resume filtering.
-  - Live count of hidden videos on the active YouTube tab.
-  - Quick-add input bar to ban a word immediately without leaving the page.
-- **Full Options Dashboard**:
-  - Clean tag-based word list with real-time search and single-click removal.
-  - **Import & Export**: Full support for `.csv`, `.tsv`, and `.txt` files with duplicate detection and replace/merge options.
-- **Fast & Battery-Friendly**: Pure Vanilla JavaScript with debounced DOM mutations (`requestAnimationFrame`) and zero external dependencies.
+- **Total Element Removal**: Completely removes matching video cards, Shorts, recommendations, and search results without leaving blank spaces.
+- **Coverage**:
+  - Home feed recommendations
+  - Search results
+  - Shorts shelves & carousels
+  - Suggested sidebar videos on watch pages
+  - Channel names & video titles
+- **Matching Options**:
+  - Case-insensitive substring match by default.
+  - Optional **Advanced Regex Mode**.
+  - Optional **Case-Sensitive** mode.
+- **Popup & Options Dashboard**:
+  - Quick ON/OFF toggle switch in toolbar.
+  - Live count of hidden videos on active YouTube tab.
+  - Quick-add keyword directly from popup.
+  - Full options page to manage words, search keywords, and **Import/Export (CSV/TSV)**.
+- **Zero Dependencies**: Pure vanilla JavaScript, fast and battery-friendly.
 
 ---
 
-## Installation & Testing
+## Installation
 
-### In Zen Browser / Firefox:
+### In Chrome, Brave, Edge & Chromium browsers
 
-1. Open **Zen Browser** or **Firefox**.
-2. In the address bar, type:
-   ```text
-   about:debugging#/runtime/this-firefox
-   ```
-   *(In Zen Browser, you can also type `about:debugging` and select "This Zen" or "This Firefox" on the left menu)*.
-3. Click the **"Load Temporary Add-on..."** button.
-4. Browse to this project directory and select the `manifest.json` file.
-5. The extension is now loaded! The shield icon will appear in your browser toolbar.
+1. Open `chrome://extensions` (or `brave://extensions` / `edge://extensions`).
+2. Turn ON **"Developer mode"** (toggle in top-right corner).
+3. Click **"Load unpacked"** and select this project folder.
+4. *Done! The extension will stay installed permanently.*
+
+### In Zen Browser / Firefox Developer Edition
+
+1. In a new tab, go to `about:config`.
+2. Search for `xpinstall.signatures.required` and set it to **`false`**.
+3. Run `npm run pack` (see below) to create `dist/youtube-ban-words.xpi`.
+4. Drag and drop `youtube-ban-words.xpi` into the browser window to install permanently.
+
+### In Standard Firefox (Testing / Debugging)
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **"Load Temporary Add-on..."** and choose `manifest.json`.
 
 ---
 
-## How to Use
+## Packaging (`npm run pack`)
 
-### 1. Adding Words from the Popup
-- Click the **YouTube Ban Words** icon in the toolbar.
-- Type any word or comma-separated list into the quick input (e.g., `keyword1, keyword2`).
-- Click **Add**.
+To package the extension into ready-to-distribute `.zip` and `.xpi` archives, run:
 
-### 2. Opening the Full Options Dashboard
-- Right-click the extension icon and select **Manage Extension > Options**, or click **"Full Word List & Settings"** in the popup.
-- Here you can:
-  - Add multiple keywords separated by commas or line breaks.
-  - Toggle **Advanced Regex Mode** or **Case Sensitive** matching.
-  - Search your banned keywords using the search bar.
-  - Export your list to `.csv` or `.tsv`.
-  - Import a list from another browser or file.
+```bash
+npm run pack
+```
+
+> **Cross-Platform**: Uses a built-in zero-dependency Node.js script that works identically on **macOS (zsh)**, **Linux (bash)**, and **Windows (PowerShell / CMD)**.
+
+Generated files in `dist/`:
+- `dist/youtube-ban-words.zip`: For Chrome, Edge, Brave, or Chrome Web Store upload.
+- `dist/youtube-ban-words.xpi`: For Firefox and Zen Browser installation.
 
 ---
 
 ## Project Structure
 
 ```text
-YoutubeBanWords-FirefoxExtension/
-├── manifest.json          # WebExtensions MV3 configuration
-├── content/
-│   ├── content.js         # DOM scanning, MutationObserver, filtering logic
-│   └── content.css        # CSS rule for hidden elements ([data-yt-banned="true"])
-├── popup/
-│   ├── popup.html         # Quick toolbar popup
-│   ├── popup.css          # Styling for popup
-│   └── popup.js           # Popup logic (toggle, stats, quick add)
-├── options/
-│   ├── options.html       # Full options dashboard
-│   ├── options.css        # Dashboard styling (dark/light theme aware)
-│   └── options.js         # Word management, regex toggle, CSV/TSV import/export
-├── icons/
-│   ├── icon.svg           # Scalable vector icon
-│   ├── icon-16.png        # 16x16 icon
-│   ├── icon-48.png        # 48x48 icon
-│   ├── icon-96.png        # 96x96 icon
-│   └── icon-128.png       # 128x128 icon
-└── README.md
+├── manifest.json       # WebExtensions MV3 configuration
+├── content/            # Injected script & CSS for filtering YouTube
+├── popup/              # Toolbar popup UI & controls
+├── options/            # Full options dashboard & import/export
+├── icons/              # Extension icons (SVG, PNG)
+├── scripts/pack.js     # Cross-platform zip & xpi packaging script
+└── package.json        # Contains `npm run pack` script
 ```
 
 ---
 
-## Compatibility
+## License
 
-- **Zen Browser**: Fully compatible (all versions).
-- **Mozilla Firefox**: Version 109.0 or newer (Manifest V3).
+MIT
