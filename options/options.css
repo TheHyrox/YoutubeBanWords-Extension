@@ -422,6 +422,82 @@ input:checked + .slider:before {
   transition: background 0.15s;
 }
 
+.word-tag.invalid-regex {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.regex-warn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.2);
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+
+/* Regex Tester Tool */
+.tester-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tester-field {
+  width: 100%;
+  background: var(--bg-inner);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  padding: 8px 12px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.tester-field:focus {
+  border-color: var(--accent);
+}
+
+.tester-result {
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-inner);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.tester-result.success {
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.tester-result.match {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  font-weight: 600;
+}
+
+.tester-result.no-match {
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.tester-result.error {
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
 .word-tag:hover {
   background: var(--bg-hover);
 }

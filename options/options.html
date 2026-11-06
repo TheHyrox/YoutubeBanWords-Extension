@@ -74,6 +74,17 @@
           </div>
         </section>
 
+        <!-- Regex Tester (Active when Regex Mode is ON) -->
+        <section class="card" id="regexTesterCard" style="display: none;">
+          <h2>Regex Pattern Tester</h2>
+          <p class="setting-desc" style="margin-bottom: 12px;">Test patterns against sample titles before adding them.</p>
+          <div class="tester-inputs">
+            <input type="text" id="regexTestPattern" class="tester-field" placeholder="Pattern (e.g. \\b(spoiler|leak)\\b)" spellcheck="false" autocomplete="off">
+            <input type="text" id="regexTestSubject" class="tester-field" placeholder="Sample video title to test against..." spellcheck="false" autocomplete="off">
+          </div>
+          <div id="regexTestResult" class="tester-result">Enter pattern and sample text above</div>
+        </section>
+
         <!-- Import / Export -->
         <section class="card">
           <h2>Backup & Transfer</h2>

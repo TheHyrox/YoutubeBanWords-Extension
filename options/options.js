@@ -22,6 +22,10 @@
   const optRegex = document.getElementById('optRegex');
   const optWholeWord = document.getElementById('optWholeWord');
   const optCase = document.getElementById('optCase');
+  const regexTesterCard = document.getElementById('regexTesterCard');
+  const regexTestPattern = document.getElementById('regexTestPattern');
+  const regexTestSubject = document.getElementById('regexTestSubject');
+  const regexTestResult = document.getElementById('regexTestResult');
   const addWordsForm = document.getElementById('addWordsForm');
   const wordsInput = document.getElementById('wordsInput');
   const filterInput = document.getElementById('filterInput');
@@ -98,8 +102,30 @@
       const tag = document.createElement('div');
       tag.className = 'word-tag';
 
+      // Check regex validity if regex mode is active
+      let regexError = null;
+      if (settings.regexEnabled) {
+        try {
+          const flags = settings.caseSensitive ? '' : 'i';
+          new RegExp(word, flags);
+        } catch (e) {
+          regexError = e.message;
+          tag.classList.add('invalid-regex');
+        }
+      }
+
       const textSpan = document.createElement('span');
       textSpan.textContent = word;
+
+      tag.appendChild(textSpan);
+
+      if (regexError) {
+        const warnBadge = document.createElement('span');
+        warnBadge.className = 'regex-warn-badge';
+        warnBadge.setAttribute('title', `Invalid Regex: ${regexError}`);
+        warnBadge.textContent = 'Invalid Regex';
+        tag.appendChild(warnBadge);
+      }
 
       const delBtn = document.createElement('button');
       delBtn.className = 'delete-word';
@@ -116,7 +142,6 @@
         removeWord(word);
       });
 
-      tag.appendChild(textSpan);
       tag.appendChild(delBtn);
       wordsContainer.appendChild(tag);
     });
@@ -132,21 +157,66 @@
     const existingLower = new Set(settings.words.map(w => w.toLowerCase()));
     let addedCount = 0;
 
+    let invalidRegexFound = false;
     for (const item of wordsArray) {
       const clean = item.trim();
       if (clean && !existingLower.has(clean.toLowerCase())) {
         settings.words.push(clean);
         existingLower.add(clean.toLowerCase());
         addedCount++;
+
+        if (settings.regexEnabled) {
+          try {
+            const flags = settings.caseSensitive ? '' : 'i';
+            new RegExp(clean, flags);
+          } catch (_) {
+            invalidRegexFound = true;
+          }
+        }
       }
     }
 
     if (addedCount > 0) {
       renderWords();
       saveSettings();
+      if (invalidRegexFound) {
+        showSavedToast('Warning: One or more patterns contain invalid regex syntax');
+      }
     }
 
     return addedCount;
+  }
+
+  // Regex Tester Tool Logic
+  function testRegexPattern() {
+    if (!regexTestPattern || !regexTestResult) return;
+    const pattern = regexTestPattern.value.trim();
+    const subject = regexTestSubject ? regexTestSubject.value : '';
+
+    if (!pattern) {
+      regexTestResult.textContent = 'Enter pattern and sample text above';
+      regexTestResult.className = 'tester-result';
+      return;
+    }
+
+    try {
+      const flags = settings.caseSensitive ? '' : 'i';
+      const rx = new RegExp(pattern, flags);
+
+      if (!subject) {
+        regexTestResult.textContent = 'Valid regular expression syntax ✓ (enter sample text to test matching)';
+        regexTestResult.className = 'tester-result success';
+      } else if (rx.test(subject)) {
+        regexTestResult.textContent = 'Match Found: Content would be hidden ✓';
+        regexTestResult.className = 'tester-result match';
+      } else {
+        regexTestResult.textContent = 'No Match: Content would remain visible';
+        regexTestResult.className = 'tester-result no-match';
+      }
+    } catch (err) {
+      regexTestResult.textContent = `Invalid Regex: ${err.message}`;
+      regexTestResult.className = 'tester-result error';
+    }
   }
 
   // Initialize
@@ -171,6 +241,10 @@
       optWholeWord.checked = settings.wholeWord;
       optCase.checked = settings.caseSensitive;
 
+      if (regexTesterCard) {
+        regexTesterCard.style.display = settings.regexEnabled ? 'block' : 'none';
+      }
+
       renderWords();
     } catch (err) {
       console.error('[YouTube Ban Words] Failed to initialize options:', err);
@@ -185,8 +259,20 @@
 
   optRegex.addEventListener('change', () => {
     settings.regexEnabled = optRegex.checked;
+    if (regexTesterCard) {
+      regexTesterCard.style.display = settings.regexEnabled ? 'block' : 'none';
+    }
+    renderWords();
+    testRegexPattern();
     saveSettings();
   });
+
+  if (regexTestPattern) {
+    regexTestPattern.addEventListener('input', testRegexPattern);
+  }
+  if (regexTestSubject) {
+    regexTestSubject.addEventListener('input', testRegexPattern);
+  }
 
   optWholeWord.addEventListener('change', () => {
     settings.wholeWord = optWholeWord.checked;
