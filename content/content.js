@@ -12,10 +12,12 @@
     enabled: true,
     words: [],
     regexEnabled: false,
-    caseSensitive: false
+    caseSensitive: false,
+    wholeWord: false
   };
 
   let compiledRegexes = [];
+  let compiledWholeWordRegexes = [];
   let normalizedWords = [];
   let isScanning = false;
   let scanScheduled = false;
@@ -81,14 +83,16 @@
         enabled: true,
         words: [],
         regexEnabled: false,
-        caseSensitive: false
+        caseSensitive: false,
+        wholeWord: false
       });
 
       settings = {
         enabled: data.enabled !== false,
         words: Array.isArray(data.words) ? data.words.filter(w => typeof w === 'string' && w.trim().length > 0) : [],
         regexEnabled: Boolean(data.regexEnabled),
-        caseSensitive: Boolean(data.caseSensitive)
+        caseSensitive: Boolean(data.caseSensitive),
+        wholeWord: Boolean(data.wholeWord)
       };
 
       compileRules();
@@ -99,23 +103,44 @@
   }
 
   /**
+   * Escape special characters for safe regular expression generation
+   */
+  function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
    * Pre-compile regexes or normalize search words
    */
   function compileRules() {
     compiledRegexes = [];
+    compiledWholeWordRegexes = [];
     normalizedWords = [];
 
     if (!settings.enabled || settings.words.length === 0) {
       return;
     }
 
+    const flags = settings.caseSensitive ? '' : 'i';
+
     if (settings.regexEnabled) {
       for (const pattern of settings.words) {
         try {
-          const flags = settings.caseSensitive ? '' : 'i';
           compiledRegexes.push(new RegExp(pattern, flags));
         } catch (e) {
           console.warn('[YouTube Ban Words] Invalid regex:', pattern, e);
+        }
+      }
+    } else if (settings.wholeWord) {
+      for (const word of settings.words) {
+        const clean = word.trim();
+        if (!clean) continue;
+        try {
+          // Word boundary matching with unicode letter/number boundary support
+          compiledWholeWordRegexes.push(new RegExp(`(?:^|[^\\p{L}\\p{N}_])${escapeRegex(clean)}(?=[^\\p{L}\\p{N}_]|$)`, `${flags}u`));
+        } catch (_) {
+          // Fallback to standard word boundary
+          compiledWholeWordRegexes.push(new RegExp(`\\b${escapeRegex(clean)}\\b`, flags));
         }
       }
     } else {
@@ -135,6 +160,10 @@
 
     if (settings.regexEnabled) {
       return compiledRegexes.some(rx => rx.test(text));
+    }
+
+    if (settings.wholeWord) {
+      return compiledWholeWordRegexes.some(rx => rx.test(text));
     }
 
     const testText = settings.caseSensitive ? text : text.toLowerCase();
@@ -294,6 +323,7 @@
       if (changes.words) settings.words = Array.isArray(changes.words.newValue) ? changes.words.newValue : [];
       if (changes.regexEnabled) settings.regexEnabled = Boolean(changes.regexEnabled.newValue);
       if (changes.caseSensitive) settings.caseSensitive = Boolean(changes.caseSensitive.newValue);
+      if (changes.wholeWord) settings.wholeWord = Boolean(changes.wholeWord.newValue);
 
       compileRules();
       applyFilter();

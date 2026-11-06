@@ -13,12 +13,14 @@
     enabled: true,
     words: [],
     regexEnabled: false,
-    caseSensitive: false
+    caseSensitive: false,
+    wholeWord: false
   };
 
   // DOM Elements
   const optEnabled = document.getElementById('optEnabled');
   const optRegex = document.getElementById('optRegex');
+  const optWholeWord = document.getElementById('optWholeWord');
   const optCase = document.getElementById('optCase');
   const addWordsForm = document.getElementById('addWordsForm');
   const wordsInput = document.getElementById('wordsInput');
@@ -142,16 +144,19 @@
         enabled: true,
         words: [],
         regexEnabled: false,
-        caseSensitive: false
+        caseSensitive: false,
+        wholeWord: false
       });
 
       settings.enabled = data.enabled !== false;
       settings.words = Array.isArray(data.words) ? data.words : [];
       settings.regexEnabled = Boolean(data.regexEnabled);
       settings.caseSensitive = Boolean(data.caseSensitive);
+      settings.wholeWord = Boolean(data.wholeWord);
 
       optEnabled.checked = settings.enabled;
       optRegex.checked = settings.regexEnabled;
+      optWholeWord.checked = settings.wholeWord;
       optCase.checked = settings.caseSensitive;
 
       renderWords();
@@ -168,6 +173,11 @@
 
   optRegex.addEventListener('change', () => {
     settings.regexEnabled = optRegex.checked;
+    saveSettings();
+  });
+
+  optWholeWord.addEventListener('change', () => {
+    settings.wholeWord = optWholeWord.checked;
     saveSettings();
   });
 
