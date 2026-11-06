@@ -214,6 +214,92 @@ async function main() {
       await popupPage.close();
     });
 
+    // 7. Test Whole-Word Matching Mode
+    await runTest('Options & Content: Whole-word mode filters exact word without false substrings', async () => {
+      const optPage = await context.newPage();
+      await optPage.goto(`chrome-extension://${extId}/options/options.html`);
+
+      // Clear all existing words and add 'cat'
+      await optPage.click('#clearAllBtn');
+      // accept confirm dialog
+      optPage.on('dialog', async dialog => {
+        await dialog.accept();
+      });
+      await optPage.click('#clearAllBtn');
+      await optPage.waitForTimeout(200);
+
+      // Enable Whole Word Match
+      await optPage.click('label:has(#optWholeWord) .slider');
+      await optPage.waitForTimeout(200);
+
+      // Add 'cat'
+      await optPage.fill('#wordsInput', 'cat');
+      await optPage.click('#addBtn');
+      await optPage.waitForTimeout(300);
+
+      await optPage.close();
+
+      // Test on YouTube mock page
+      const testYt = await context.newPage();
+      await testYt.route('https://www.youtube.com/**', route => {
+        route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          body: `
+            <div id="contents">
+              <ytd-rich-item-renderer id="exactMatch">
+                <span id="video-title">My funny cat playing in the garden</span>
+              </ytd-rich-item-renderer>
+              <ytd-rich-item-renderer id="substringWord">
+                <span id="video-title">The biggest catch of the season</span>
+              </ytd-rich-item-renderer>
+            </div>
+          `
+        });
+      });
+
+      await testYt.goto('https://www.youtube.com');
+      await testYt.waitForTimeout(500);
+
+      const exactBanned = await testYt.$eval('#exactMatch', el => el.getAttribute('data-yt-banned'));
+      const subBanned = await testYt.$eval('#substringWord', el => el.getAttribute('data-yt-banned'));
+
+      assert.equal(exactBanned, 'true', 'Card with exact whole-word "cat" should be banned');
+      assert.equal(subBanned, null, 'Card with substring "catch" should NOT be banned in whole-word mode');
+
+      await testYt.close();
+    });
+
+    // 8. Test Regex Pattern Tester UI
+    await runTest('Options: Regex tester displays real-time matching and error validation', async () => {
+      const optPage = await context.newPage();
+      await optPage.goto(`chrome-extension://${extId}/options/options.html`);
+
+      // Enable Advanced Regex Mode
+      await optPage.click('label:has(#optRegex) .slider');
+      await optPage.waitForTimeout(300);
+
+      const testerVisible = await optPage.isVisible('#regexTesterCard');
+      assert.ok(testerVisible, 'Regex tester widget should be visible when Regex Mode is ON');
+
+      // Test valid regex match
+      await optPage.fill('#regexTestPattern', '\\b(spoiler|leak)\\b');
+      await optPage.fill('#regexTestSubject', 'Huge spoiler for the upcoming finale');
+      await optPage.waitForTimeout(200);
+
+      const matchText = await optPage.textContent('#regexTestResult');
+      assert.match(matchText, /Match Found/);
+
+      // Test invalid regex syntax
+      await optPage.fill('#regexTestPattern', '[invalid(regex');
+      await optPage.waitForTimeout(200);
+
+      const errText = await optPage.textContent('#regexTestResult');
+      assert.match(errText, /Invalid Regex/);
+
+      await optPage.close();
+    });
+
     await ytPage.close();
 
     console.log(`\n\x1b[32m✨ All ${passedTests}/${totalTests} End-to-End Tests Passed Successfully!\x1b[0m\n`);
