@@ -28,7 +28,14 @@ Write clear, atomic commit messages in the imperative mood (e.g., "add", "fix", 
 ### 3. Commit Rules
 - Never commit build outputs (`dist/`, `*.zip`, `*.xpi`, `*.crx`), `.DS_Store`, or `node_modules/`.
 - Ensure `node -c` syntax checks pass before committing any JS changes.
-- If bumping versions, synchronize the version number in **both** [`package.json`](file:///Users/hyrox/Documents/Code/YoutubeBanWords-FirefoxExtension/package.json) and [`manifest.json`](file:///Users/hyrox/Documents/Code/YoutubeBanWords-FirefoxExtension/manifest.json).
+- If bumping versions, synchronize the version number in **both** [`package.json`](package.json) and [`manifest.json`](manifest.json).
+
+### 4. Semantic Versioning Rules (`vMAJOR.MINOR.PATCH`)
+Adhere to strict semantic versioning across releases and updates:
+- **Major (`vX.0.0`)**: Incompatible API shifts, fundamental architectural redesigns, or Manifest version upgrades.
+- **Minor (`vx.X.0`)**: Substantial feature additions, selector coverage expansions, or significant multi-file updates (e.g. `v1.1.0` introduced whole-word matching, JSON export/import, regex tester, and DOM scanning optimizations).
+- **Patch (`vx.x.N+1`)**: Minor maintenance, documentation updates, rule updates, or bug fixes (e.g. `v1.1.1` bumped versioning rules and manifest/package synchronization).
+- **Mandatory Synchronization**: Every version increment must be reflected simultaneously in **both** [`package.json`](package.json) (`"version": "..."`) and [`manifest.json`](manifest.json) (`"version": "..."`). Never bump one without the other.
 
 ---
 
@@ -41,7 +48,7 @@ Write clear, atomic commit messages in the imperative mood (e.g., "add", "fix", 
 ### 2. Zero-Dependency & Pure Vanilla JavaScript
 - Do **not** introduce heavy frontend frameworks (React, Vue) or build bundlers (Vite, Webpack) unless explicitly requested by the user.
 - The project is designed to be inspected, tweaked, and loaded instantly as an unpacked extension without running a build step.
-- The packager in [`scripts/pack.js`](file:///Users/hyrox/Documents/Code/YoutubeBanWords-FirefoxExtension/scripts/pack.js) is written in pure Node.js (`node:zlib`, `node:fs`) so that `npm run pack` works across macOS (zsh), Linux (bash), and Windows (PowerShell/CMD) without installing any npm packages.
+- The packager in [`scripts/pack.js`](scripts/pack.js) is written in pure Node.js (`node:zlib`, `node:fs`) so that `npm run pack` works across macOS (zsh), Linux (bash), and Windows (PowerShell/CMD) without installing any npm packages.
 
 ### 3. Dual Engine Compatibility (Firefox/Gecko & Chromium)
 - Maintain cross-browser compatibility at all times:
@@ -53,7 +60,7 @@ Write clear, atomic commit messages in the imperative mood (e.g., "add", "fix", 
   ```
 - Store data using `browserAPI.storage.sync || browserAPI.storage.local`.
 - Use Promise-based storage calls (supported natively in modern Gecko and Chromium 88+).
-- In [`manifest.json`](file:///Users/hyrox/Documents/Code/YoutubeBanWords-FirefoxExtension/manifest.json), keep `browser_specific_settings.gecko.id` intact for Firefox/Zen; Chromium will safely ignore it.
+- In [`manifest.json`](manifest.json), keep `browser_specific_settings.gecko.id` intact for Firefox/Zen; Chromium will safely ignore it.
 
 ### 4. YouTube DOM & Single Page Application (SPA) Performance
 - YouTube is a heavy SPA powered by Polymer/Lit.
@@ -94,6 +101,6 @@ git commit -m "feat: <description>"
 ---
 
 ## CI/CD Pipeline
-- Workflow located at [`.github/workflows/release.yml`](file:///Users/hyrox/Documents/Code/YoutubeBanWords-FirefoxExtension/.github/workflows/release.yml).
+- Workflow located at [`.github/workflows/release.yml`](.github/workflows/release.yml).
 - Automatically triggers on `workflow_dispatch` (manual button in GitHub UI) or on pushing version tags (`v*`).
 - Generates `dist/youtube-ban-words.zip` and `dist/youtube-ban-words.xpi` and creates a **draft release** with auto-generated commit notes for human review.

@@ -1,6 +1,6 @@
 {
   "name": "youtube-ban-words-extension",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Hide YouTube videos, shorts, and channels by banned keywords or phrases.",
   "scripts": {
     "pack": "node scripts/pack.js",
